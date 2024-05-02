@@ -41,9 +41,20 @@ B0 inhomogeneity (max deviation / mean)
 - @std. dev. = 1e-2 (realistic)
   - Non-robust: 9836ppm
   - Robust: 6047ppm
+  - Robust non-best (population): 5607ppm
 - @std. dev. = 1e-6 (randomness basically negligible)
   - Non-robust: 165 ppm
   - Robust: 333 ppm
+  - Robust non-best (population): 5432 ppm
+     - Basically the same as the high-noise case. But at least it's the same!
+
+I also checked what happens in the average case (e.g. for the robust GA, maybe
+the "best" solution is actually just a lucky solution). In fact, the random
+robust population member that I picked DID have a robust B0 inhomogeneity
+curve. The curve was flat! However, the actual inhomogeneity was about the same
+as the non-robust solution's inhomogeneity in the 1e-2 case, and was strictly
+worse for all other levels of randomness.
+
 
 
 ## Implementation notes

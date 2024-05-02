@@ -9,3 +9,6 @@ presentation/*
 *.png
 *.fig
 *.mat
+
+# MATLAB autosave
+*.asv

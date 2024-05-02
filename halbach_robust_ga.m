@@ -3,7 +3,7 @@ clear all;
 close all;
 clc;
 
-verbose = true;
+verbose = false;
 addpath ./code
 
 % Constants
@@ -19,13 +19,18 @@ human_safe_force = 144; % Target maximum force between planes, [N]
 n_ring = 6;  % Number of z planes of rings
 min_R_diff = 25; % Minimum spacing between inner and outer ring
 min_spacing = 24; % 2x width of magnet
-max_spacing = 28; % Reduce search space [mm]
+max_spacing = 32; % Reduce search space [mm]
 range_lambda = 1e8; % Loss weight for field inhomogeneity
 aniso_lambda = dictionary('x', 5., 'z', 1.); % Relative weights for homogeneity in different planes
 force_lambda = 100; % Loss weight for applied force above human-safe force
 n_diff_inout = 4; % Difference between inner and outer layers
 use_force = false;
 % max_per_ring = 30; % Maximum number of magnets per ring
+
+% Parameters for robust genetic algorithm
+n_samples = 3;
+Br_std = 1e-2;
+robust_mode = 'worst';
 
 % Derived parameters
 dx_opt = 5;
@@ -61,11 +66,12 @@ min_N = zeros(1, n_ring/2);
 % - Array Spacing - continuous [n_ring/2]
 % - R_diff  [n_ring / 2]
 fitnessfcn = @(vars)( ...
-    halbach_ga_obj( ...
+    robust_halbach_ga_obj( ...
     vars(1:n_ring/2), ...         % InnerR
     vars(n_ring/2+1:n_ring),  ...    % array_spacing
     vars(n_ring+1:end), ...       % R_diff
     magnet_dim, Br, n_ring, half_FOV, FOV_1, FOV_2, FOV_3, ...
+    robust_mode, Br_std, n_samples, ...
     range_lambda, force_lambda, aniso_lambda, human_safe_force, use_force, verbose...
 ));
 
@@ -86,15 +92,15 @@ ub = [InnerR_ub; array_spacing_ub; R_diff_ub];
 %% Solve (first stage, no force constraint)
 opts = optimoptions(@ga, ...
                     'PopulationSize', 3000, ...
-                    'MaxGenerations', 40, ...
-                    'EliteCount', 600, ...
+                    'MaxGenerations', 30, ...
+                    'EliteCount', 60, ...
                     'FunctionTolerance', 1e-8, ...
                     'PlotFcn', @gaplotbestf, ...
                     'Display', 'diagnose');
 
 rng default % For reproducibility
 [sol,fval,exitflag,output,population,scores] = ga(fitnessfcn, 3*n_ring/2,[], [], [], [], lb, ub, [], [], opts);
-
+save("population_noforce.mat", "population")
 
 %% Solve (second stage, force constraint)
 % use_force = true;
